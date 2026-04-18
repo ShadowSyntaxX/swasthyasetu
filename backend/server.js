@@ -8,51 +8,67 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// ✅ Middleware
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST"]
 }));
+
 app.use(express.json());
 
+// ✅ Debug: check API key
 if (!process.env.GEMINI_API_KEY) {
-  console.error("GEMINI_API_KEY is missing!");
+  throw new Error("GEMINI_API_KEY is missing in environment variables!");
 }
 
-// Initialize Gemini AI
+// ✅ Initialize Gemini safely
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Chat endpoint
-app.post("/chat", async (req, res) => {
-  try {
-    const userMessage = req.body.message;
-
-    if (!userMessage) {
-      return res.status(400).json({ reply: "Message is required" });
-    }
-
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    });
-
-    const result = await model.generateContent(userMessage);
-    const response = await result.response;
-    const text = response.text() || "No response from AI";
-
-    res.json({ reply: text });
-
-  } catch (error) {
-    console.error("Chat error:", error);
-    res.status(500).json({ reply: "Server error occurred" });
-  }
-});
-
-// Test route (optional but useful)
+// ✅ Test route
 app.get("/", (req, res) => {
   res.send("SwasthyaSetu AI Backend is running 🚀");
 });
 
-// Start server
+// ✅ Chat endpoint (FIXED + DEBUG ENABLED)
+app.post("/chat", async (req, res) => {
+  try {
+    console.log("📩 Incoming Request Body:", req.body);
+
+    const userMessage = req.body?.message;
+
+    if (!userMessage) {
+      return res.status(400).json({
+        reply: "Message is required"
+      });
+    }
+
+    // ✅ Gemini model
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash-latest",
+    });
+
+    // ✅ Generate response
+    const result = await model.generateContent(userMessage);
+    const response = await result.response;
+    const text = response?.text?.() || "No response from AI";
+
+    console.log("🤖 Gemini Response:", text);
+
+    return res.json({
+      reply: text || "No response from AI"
+    });
+
+  } catch (error) {
+    console.error("🔥 FULL ERROR:", error.stack || error);
+
+return res.status(500).json({
+  reply: "Server error occurred",
+  debug: error.message
+    });
+  }
+});
+
+// ✅ Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
