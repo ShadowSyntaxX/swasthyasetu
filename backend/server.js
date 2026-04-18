@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ========================
-// ✅ MIDDLEWARE
+// MIDDLEWARE
 // ========================
 app.use(cors({
   origin: "*",
@@ -19,39 +19,62 @@ app.use(cors({
 app.use(express.json());
 
 // ========================
-// ❌ SAFETY CHECK (IMPORTANT)
+// SAFETY CHECK
 // ========================
 if (!process.env.GEMINI_API_KEY) {
-  console.error("❌ GEMINI_API_KEY is missing!");
-  process.exit(1); // stop server immediately if key missing
+  console.error("❌ GEMINI_API_KEY missing");
+  process.exit(1);
 }
 
 // ========================
-// 🤖 GEMINI INIT
+// GEMINI INIT
 // ========================
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ========================
-// 🧪 HEALTH CHECK ROUTE
+// HEALTH CHECK
 // ========================
 app.get("/", (req, res) => {
-  res.send("SwasthyaSetu AI Backend is running 🚀");
+  res.send("SwasthyaSetu AI Backend Running 🚀");
 });
 
 // ========================
-// 💬 CHAT ROUTE
+// CHAT ROUTE (FINAL CLEAN)
 // ========================
 app.post("/chat", async (req, res) => {
-  console.log("🔥 HIT CHAT ROUTE");
-  console.log("BODY:", req.body);
+  try {
+    const userMessage = req.body?.message;
 
-  return res.json({
-    reply: "Backend reached successfully"
-  });
+    if (!userMessage || userMessage.trim() === "") {
+      return res.status(400).json({
+        reply: "Message is required"
+      });
+    }
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+
+    const result = await model.generateContent(userMessage);
+    const response = await result.response;
+    const text = response.text();
+
+    return res.json({
+      reply: text
+    });
+
+  } catch (error) {
+    console.error("🔥 GEMINI ERROR:", error);
+
+    return res.status(500).json({
+      reply: "AI error occurred",
+      debug: error.message
+    });
+  }
 });
 
 // ========================
-// 🚀 START SERVER
+// START SERVER
 // ========================
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
