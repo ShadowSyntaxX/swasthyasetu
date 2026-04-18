@@ -8,7 +8,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Middleware
+// ========================
+// ✅ MIDDLEWARE
+// ========================
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST"]
@@ -16,41 +18,55 @@ app.use(cors({
 
 app.use(express.json());
 
-// ✅ Debug: check API key
+// ========================
+// ❌ SAFETY CHECK (IMPORTANT)
+// ========================
 if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY is missing in environment variables!");
+  console.error("❌ GEMINI_API_KEY is missing!");
+  process.exit(1); // stop server immediately if key missing
 }
 
-// ✅ Initialize Gemini safely
+// ========================
+// 🤖 GEMINI INIT
+// ========================
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ✅ Test route
+// ========================
+// 🧪 HEALTH CHECK ROUTE
+// ========================
 app.get("/", (req, res) => {
   res.send("SwasthyaSetu AI Backend is running 🚀");
 });
 
-// ✅ Chat endpoint (FIXED + DEBUG ENABLED)
+// ========================
+// 💬 CHAT ROUTE
+// ========================
 app.post("/chat", async (req, res) => {
   try {
-    console.log("📩 Incoming Request Body:", req.body);
+    console.log("📩 Request received:", req.body);
 
     const userMessage = req.body?.message;
 
-    if (!userMessage) {
+    if (!userMessage || userMessage.trim() === "") {
       return res.status(400).json({
         reply: "Message is required"
       });
     }
 
-    // ✅ Gemini model
+    // ========================
+    // 🤖 GEMINI MODEL
+    // ========================
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
+      model: "gemini-1.5-flash",
     });
 
-    // ✅ Generate response
+    // ========================
+    // 🚀 AI RESPONSE
+    // ========================
     const result = await model.generateContent(userMessage);
     const response = await result.response;
-    const text = response?.text?.() || "No response from AI";
+
+    const text = response?.text();
 
     console.log("🤖 Gemini Response:", text);
 
@@ -59,16 +75,18 @@ app.post("/chat", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("🔥 FULL ERROR:", error.stack || error);
+    console.error("🔥 CHAT ERROR:", error);
 
-return res.status(500).json({
-  reply: "Server error occurred",
-  debug: error.message
+    return res.status(500).json({
+      reply: "Server error occurred",
+      debug: error.message
     });
   }
 });
 
-// ✅ Start server
+// ========================
+// 🚀 START SERVER
+// ========================
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
