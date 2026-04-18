@@ -42,46 +42,12 @@ app.get("/", (req, res) => {
 // 💬 CHAT ROUTE
 // ========================
 app.post("/chat", async (req, res) => {
-  try {
-    console.log("📩 Request received:", req.body);
+  console.log("🔥 HIT CHAT ROUTE");
+  console.log("BODY:", req.body);
 
-    const userMessage = req.body?.message;
-
-    if (!userMessage || userMessage.trim() === "") {
-      return res.status(400).json({
-        reply: "Message is required"
-      });
-    }
-
-    // ========================
-    // 🤖 GEMINI MODEL
-    // ========================
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    });
-
-    // ========================
-    // 🚀 AI RESPONSE
-    // ========================
-    const result = await model.generateContent(userMessage);
-    const response = await result.response;
-
-    const text = response?.text();
-
-    console.log("🤖 Gemini Response:", text);
-
-    return res.json({
-      reply: text || "No response from AI"
-    });
-
-  } catch (error) {
-    console.error("🔥 CHAT ERROR:", error);
-
-    return res.status(500).json({
-      reply: "Server error occurred",
-      debug: error.message
-    });
-  }
+  return res.json({
+    reply: "Backend reached successfully"
+  });
 });
 
 // ========================
