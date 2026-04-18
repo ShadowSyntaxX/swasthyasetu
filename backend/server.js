@@ -1,43 +1,58 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+dotenv.config();
 
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"]
+}));
 app.use(express.json());
 
+if (!process.env.GEMINI_API_KEY) {
+  console.error("GEMINI_API_KEY is missing!");
+}
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Chat endpoint
 app.post("/chat", async (req, res) => {
-  console.log("✅ Request received at /chat");
-
   try {
-    const { message } = req.body;
+    const userMessage = req.body.message;
 
-    const response = await fetch("http://localhost:11434/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "llama3.2:1b",
-        prompt: `You are Health Mitra AI. Answer about hygiene and sanitation simply:\n${message}`,
-        stream: false,
-      }),
+    if (!userMessage) {
+      return res.status(400).json({ reply: "Message is required" });
+    }
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
     });
 
-    const data = await response.json();
-    console.log("Ollama Response:", data);
+    const result = await model.generateContent(userMessage);
+    const response = await result.response;
+    const text = response.text() || "No response from AI";
 
-    return res.json({
-      reply: data.response || "No response",
-    });
+    res.json({ reply: text });
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      reply: "⚠️ Server error. Try again.",
-    });
+    console.error("Chat error:", error);
+    res.status(500).json({ reply: "Server error occurred" });
   }
 });
 
-app.listen(5000, () => {
-  console.log("🚀 Server running on port 5000");
+// Test route (optional but useful)
+app.get("/", (req, res) => {
+  res.send("SwasthyaSetu AI Backend is running 🚀");
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
