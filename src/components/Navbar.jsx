@@ -9,7 +9,6 @@ export default function Navbar() {
     { id: "hygiene", label: "Personal Hygiene" },
     { id: "sanitation", label: "Basic Sanitation" },
     { id: "videos", label: "Videos" },
-    { id: "ai-friend", label: "AI Friend" },
     { id: "about", label: "About" },
   ];
 

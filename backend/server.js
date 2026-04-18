@@ -39,7 +39,7 @@ app.get("/", (req, res) => {
 });
 
 // ========================
-// CHAT ROUTE (FINAL CLEAN)
+// CHAT ROUTE (FINAL CLEAN ONLY)
 // ========================
 app.post("/chat", async (req, res) => {
   try {
